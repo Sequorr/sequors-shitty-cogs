@@ -1,5 +1,5 @@
 {
-    "author": "Sequor",
+    "author": ["Sequor"],
     "install_msg": "Uh... hi! Thanks for checking out my cogs. NOTE: These are provided as-is and are not supported. If you have any issues, please open an issue on GitHub.",
     "name": "Sequor's Shitty Cogs",
     "short": "Dumb Redbot cogs I made for personal use. Add them at your own risk.",

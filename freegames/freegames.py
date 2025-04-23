@@ -1,7 +1,9 @@
 import discord
 import aiohttp
 import time
-from redbot.core import commands, Config, tasks # type: ignore
+from redbot.core import commands, Config
+from redbot.core.tasks import loop  # ✅ Proper way to import the loop decorator
+
 
 class FreeGames(commands.Cog):
     """Get free game deals from CheapShark."""
@@ -22,7 +24,7 @@ class FreeGames(commands.Cog):
 
         self.auto_check_task.start()  # Start background loop here
 
-    @tasks.loop(minutes=10)
+    @loop(minutes=10)
     async def auto_check_task(self):
         for guild in self.bot.guilds:
             config = self.config.guild(guild)

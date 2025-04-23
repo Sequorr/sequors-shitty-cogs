@@ -1,5 +1,5 @@
 {
-    "author": "Sequor",
+    "author": ["Sequor"],
     "install_msg": "FreeGames cog successfully loaded. Use [p]help freegames to get started.",
     "name": "FreeGames",
     "short": "A cog that provides a list of free games available on various platforms.",
