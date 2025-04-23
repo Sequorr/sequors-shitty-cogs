@@ -2,7 +2,7 @@ import discord
 import aiohttp
 import time
 from redbot.core import commands, Config
-from redbot.core.tasks import loop  # ✅ Proper way to import the loop decorator
+from discord.ext.tasks import loop  # ✅ Proper way to import the loop decorator
 
 
 class FreeGames(commands.Cog):
