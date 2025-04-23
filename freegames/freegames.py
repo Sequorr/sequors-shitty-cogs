@@ -1,7 +1,7 @@
 import discord 
 import aiohttp
 import time
-from redbot.core import commands, Config
+from redbot.core import commands, Config, checks
 from discord.ext.tasks import loop
 
 STORE_NAMES = {
@@ -27,7 +27,8 @@ class FreeGames(commands.Cog):
             indiegala_enabled=True, # Whether or not to include IndieGala deals
             fanatical_enabled=True, # Whether or not to include Fanatical deals
             last_check=0, # Timestamp of the last check
-            last_deal=None  # Store the last deal ID to avoid duplicates
+            last_deal=None,  # Store the last deal ID to avoid duplicates
+            ping_role=None # Optional role to ping when a new deal is found
         )
 
         self.auto_check_task.start()  # Start background loop here
@@ -90,7 +91,13 @@ class FreeGames(commands.Cog):
             embed.set_thumbnail(url=game["thumb"])
             embed.set_footer(text="Next check in 3 hours.")
 
-            await channel.send(embed=embed)
+            ping_id = await config.ping_role()
+            ping_text = f"<@&{ping_id}>" if ping_id else None
+
+            if ping_text:
+                await channel.send(content=ping_text, embed=embed)
+            else:
+                await channel.send(embed=embed)
             await config.last_check.set(now)
             await config.last_deal.set(game["dealID"])  # Save dealID to avoid duplicates
 
@@ -216,6 +223,27 @@ class FreeGames(commands.Cog):
         new_state = not current
         await self.config.guild(ctx.guild).fanatical_enabled.set(new_state)
         await ctx.send("✅ Fanatical: Enabled" if new_state else "❌ Fanatical: Disabled")
+    
+    @freegames.command()
+    @checks.is_owner()
+    async def ping_role(self, ctx, role: discord.Role = None):
+        """Set or clear the role to ping when free games are posted (bot owner only)."""
+        config = self.config.guild(ctx.guild)
+        if role is None:
+            current = await config.ping_role()
+            if current:
+                role_obj = ctx.guild.get_role(current)
+                if role_obj:
+                    await ctx.send(f"📎 Current ping role: {role_obj.mention}")
+                else:
+                    await ctx.send("⚠ Ping role is set but I can't find it. You may want to set a new one.")
+            else:
+                await ctx.send("ℹ No ping role is currently set.")
+            return
+        
+        await config.ping_role.set(role.id)
+        await ctx.send(f"✅ Ping role set to {role.mention}. This role will be pinged when new free games are posted.")
+
 
     @freegames.command(name="check")
     @commands.admin_or_permissions(administrator=True)
