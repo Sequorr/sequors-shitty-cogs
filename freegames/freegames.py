@@ -1,9 +1,16 @@
-import discord
+import discord 
 import aiohttp
 import time
 from redbot.core import commands, Config
-from discord.ext.tasks import loop  # ✅ Proper way to import the loop decorator
+from discord.ext.tasks import loop
 
+STORE_NAMES = {
+    "1": "Steam",
+    "7": "GOG",
+    "15": "Fanatical",
+    "25": "Epic Games",
+    "30": "IndieGala"
+}
 
 class FreeGames(commands.Cog):
     """Get free game deals from CheapShark."""
@@ -12,14 +19,15 @@ class FreeGames(commands.Cog):
         self.bot = bot
         self.config = Config.get_conf(self, identifier=1234567890)
         self.config.register_guild(
-            post_channel=None,
-            enabled=True,
-            steam_enabled=True,
-            epic_enabled=True,
-            gog_enabled=True,
-            indiegala_enabled=True,
-            fanatical_enabled=True,
-            last_check=0
+            post_channel=None, # Channel ID for posting free game deals
+            enabled=True, # Whether or not the command is enabled
+            steam_enabled=True, # Whether or not to include Steam deals
+            epic_enabled=True, # Whether or not to include Epic Games deals
+            gog_enabled=True, # Whether or not to include GOG deals
+            indiegala_enabled=True, # Whether or not to include IndieGala deals
+            fanatical_enabled=True, # Whether or not to include Fanatical deals
+            last_check=0, # Timestamp of the last check
+            last_deal=None  # Store the last deal ID to avoid duplicates
         )
 
         self.auto_check_task.start()  # Start background loop here
@@ -63,12 +71,17 @@ class FreeGames(commands.Cog):
             if not deals:
                 continue
 
+            # Skip if it's a repeat of the last deal
+            game = deals[0]
+            last_posted = await config.last_deal()
+            if game["dealID"] == last_posted:
+                continue  # We've already posted this one
+
             # Post in the configured channel
             channel = guild.get_channel(channel_id)
             if channel is None:
                 continue
 
-            game = deals[0]
             embed = discord.Embed(
                 title="🎮 Free Game Alert!",
                 description=f"[{game['title']}](https://www.cheapshark.com/redirect?dealID={game['dealID']}) is free right now!",
@@ -79,11 +92,13 @@ class FreeGames(commands.Cog):
 
             await channel.send(embed=embed)
             await config.last_check.set(now)
+            await config.last_deal.set(game["dealID"])  # Save dealID to avoid duplicates
+
 
     @commands.group(invoke_without_command=True)
     async def freegames(self, ctx):
         """Get free game deals from CheapShark."""
-        await ctx.send("Use a subcommand like `[p]freegames channel #channel` to configure me.")
+        await ctx.send("Use `[p]help freegames` to get started.")
     
     @freegames.command(name="toggle")
     async def toggle_check(self, ctx):
@@ -127,7 +142,11 @@ class FreeGames(commands.Cog):
                 color=discord.Color.green()
             )
             game = deals[0]
-            embed.add_field(name=game["title"], value=f"[View Deal](https://www.cheapshark.com/redirect?dealID={game['dealID']})")
+            store_name = STORE_NAMES.get(game["storeID"], "Unknown Store")
+            embed.add_field(
+                name=f"{game['title']} [{store_name}]",
+                value=f"[View Deal](https://www.cheapshark.com/redirect?dealID={game['dealID']})"
+            )
             embed.set_thumbnail(url=game["thumb"])
             embed.set_footer(text="Use [p]freegames again to toggle off.")
 
@@ -231,12 +250,20 @@ class FreeGames(commands.Cog):
             return
 
         game = deals[0]
+        last_posted = await config.last_deal()
+        if game["dealID"] == last_posted:
+            await ctx.send("📌 No new free games since the last check.")
+            return
+        
+        store_name = STORE_NAMES.get(game["storeID"], "Unknown Store")
+
         embed = discord.Embed(
             title="🎮 Free Game Check",
-            description=f"[{game['title']}](https://www.cheapshark.com/redirect?dealID={game['dealID']}) is currently free!",
+            description=f"[{game['title']}](https://www.cheapshark.com/redirect?dealID={game['dealID']}) is currently free on **{store_name}**!",
             color=discord.Color.green()
         )
         embed.set_thumbnail(url=game["thumb"])
         embed.set_footer(text="Use [p]freegames <store> to manage sources.")
 
         await channel.send(embed=embed)
+        await config.last_deal.set(game["dealID"])  # Store this one to prevent future repeats
