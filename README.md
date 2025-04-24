@@ -11,10 +11,11 @@ Queries the [CheapShark API](https://apidocs.cheapshark.com/) for free games fro
 | `freegames steam` | Toggle Steam store inclusion                  | `[p]freegames steam`         |
 | `freegames epic`  | Toggle Epic Games store inclusion             | `[p]freegames epic`          |
 | `freegames gog`   | Toggle GOG store inclusion                    | `[p]freegames gog`           |
-| `freegames fanatical` | Toggle Fanatical store inclusion         | `[p]freegames fanatical`     |
-| `freegames indiegala` | Toggle IndieGala store inclusion         | `[p]freegames indiegala`     |
-| `freegames toggle`| Enable or disable periodic deal checks       | `[p]freegames toggle`        |
+| `freegames fanatical` | Toggle Fanatical store inclusion         | `[p]freegames fanatical`      |
+| `freegames indiegala` | Toggle IndieGala store inclusion         | `[p]freegames indiegala`      |
+| `freegames toggle`| Enable or disable periodic deal checks       | `[p]freegames toggle`         |
 | `freegames check` | **Admin only:** Immediately post current deals | `[p]freegames check`        |
+| `freegames ping_role` | **Admin only:** Set a role to mention | `[p]freegames ping_role @role`   |
 
 ---
 
