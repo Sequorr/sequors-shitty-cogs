@@ -27,7 +27,7 @@ class FreeGames(commands.Cog):
             indiegala_enabled=True, # Whether or not to include IndieGala deals
             fanatical_enabled=True, # Whether or not to include Fanatical deals
             last_check=0, # Timestamp of the last check
-            last_deal=None,  # Store the last deal ID to avoid duplicates
+            last_deal=None, # Store the last deal ID to avoid duplicates
             ping_role=None # Optional role to ping when a new deal is found
         )
 
@@ -83,9 +83,10 @@ class FreeGames(commands.Cog):
             if channel is None:
                 continue
 
+            store_name = STORE_NAMES.get(game["storeID"], "Unknown Store")
             embed = discord.Embed(
                 title="🎮 Free Game Alert!",
-                description=f"[{game['title']}](https://www.cheapshark.com/redirect?dealID={game['dealID']}) is free right now!",
+                description=f"[{game['title']}](https://www.cheapshark.com/redirect?dealID={game['dealID']}) is free right now on **{store_name}**!",
                 color=discord.Color.green()
             )
             embed.set_thumbnail(url=game["thumb"])
@@ -93,9 +94,12 @@ class FreeGames(commands.Cog):
 
             ping_id = await config.ping_role()
             ping_text = f"<@&{ping_id}>" if ping_id else None
-
             if ping_text:
-                await channel.send(content=ping_text, embed=embed)
+                await channel.send(
+                    content=ping_text,
+                    embed=embed,
+                    allowed_mentions=discord.AllowedMentions(roles=True)
+                )
             else:
                 await channel.send(embed=embed)
             await config.last_check.set(now)
